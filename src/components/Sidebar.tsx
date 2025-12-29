@@ -49,7 +49,7 @@ export default function Sidebar() {
       {/* Logo/Header */}
       <div className="p-6 border-b border-gray-200 flex-shrink-0">
         <h1 className="text-xl font-bold text-gray-900">KWSC Ops Portal</h1>
-        <p className="text-sm text-gray-600 mt-1">Admin Dashboard</p>
+        <p className="text-sm text-gray-600 mt-1">Reviewer Dashboard</p>
       </div>
 
       {/* Navigation */}
