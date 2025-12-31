@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import DashboardLayout from '../components/DashboardLayout'
 import Page from '../components/Page'
 import Table, { type TableColumn } from '../components/Table'
@@ -90,27 +90,21 @@ export default function SiteRegistrationsPage() {
     fetchAreas()
   }, [])
 
-  useEffect(() => {
-    if (fetchingRef.current) return
-    fetchingRef.current = true
-
-    let isCancelled = false
-
-    const fetchPendingReviews = async () => {
+  // Fetch pending reviews function (can be used for initial load and auto-refresh)
+  const fetchPendingReviews = useCallback(async (showLoading: boolean = true) => {
+    if (showLoading) {
       setIsLoading(true)
       setError(null)
+    }
 
-      try {
-        const response = await apiClient.getPendingReviews()
+    try {
+      const response = await apiClient.getPendingReviews()
 
-        if (isCancelled) return
-
-        if (response.success && response.data) {
-          setReviews(response.data)
-        }
-      } catch (err) {
-        if (isCancelled) return
-
+      if (response.success && response.data) {
+        setReviews(response.data)
+      }
+    } catch (err) {
+      if (showLoading) {
         if (err instanceof Error) {
           setError(err.message)
           if (err.message.includes('Unauthorized') || err.message.includes('401')) {
@@ -120,20 +114,49 @@ export default function SiteRegistrationsPage() {
         } else {
           setError('Failed to load site registrations')
         }
-      } finally {
-        if (!isCancelled) {
-          setIsLoading(false)
-        }
+      } else {
+        // Silent error handling for auto-refresh (just log to console)
+        console.error('Auto-refresh failed:', err)
+      }
+    } finally {
+      if (showLoading) {
+        setIsLoading(false)
       }
     }
+  }, [])
 
-    fetchPendingReviews()
+  // Initial fetch on component mount
+  useEffect(() => {
+    if (fetchingRef.current) return
+    fetchingRef.current = true
+
+    let isCancelled = false
+
+    const loadData = async () => {
+      await fetchPendingReviews(true)
+      if (isCancelled) return
+    }
+
+    loadData()
 
     return () => {
       isCancelled = true
       fetchingRef.current = false
     }
-  }, [])
+  }, [fetchPendingReviews])
+
+  // Auto-refresh every 1 minute (silently)
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      // Silent refresh - don't show loading state
+      fetchPendingReviews(false)
+    }, 60000) // 1 minute = 60000 milliseconds
+
+    // Cleanup interval on unmount
+    return () => {
+      clearInterval(intervalId)
+    }
+  }, [fetchPendingReviews])
 
   const handleApprove = async (reviewId: string) => {
     try {
