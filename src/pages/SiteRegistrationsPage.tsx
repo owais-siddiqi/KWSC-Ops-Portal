@@ -6,6 +6,7 @@ import StatusBadge from '../components/StatusBadge'
 import Modal from '../components/Modal'
 import RejectModal from '../components/RejectModal'
 import SearchableSelect from '../components/SearchableSelect'
+import MultiSelectDropdown from '../components/MultiSelectDropdown'
 import { apiClient } from '../services/api'
 import { authUtils } from '../utils/auth'
 
@@ -73,6 +74,17 @@ export default function SiteRegistrationsPage() {
   const [blocks, setBlocks] = useState<Array<{ id: number; name: string; areaId: number }>>([])
   const [isLoadingAreas, setIsLoadingAreas] = useState(false)
   const [isLoadingBlocks, setIsLoadingBlocks] = useState(false)
+
+  // Search and Filter states
+  const [searchQuery, setSearchQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState<string[]>([])
+  const [priorityFilter, setPriorityFilter] = useState<string[]>([])
+  const [reviewTypeFilter, setReviewTypeFilter] = useState<string[]>([])
+  const [showFilters, setShowFilters] = useState(false)
+  
+  // Sorting state
+  const [sortKey, setSortKey] = useState<string | null>(null)
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
 
   // Fetch areas on component mount (after login)
   useEffect(() => {
@@ -461,10 +473,63 @@ export default function SiteRegistrationsPage() {
     return 'pending'
   }
 
+  // Handle column sorting
+  const handleSort = (key: string) => {
+    if (sortKey === key) {
+      // Toggle direction if same column
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      // New column, start with ascending
+      setSortKey(key)
+      setSortDirection('asc')
+    }
+  }
+
+  // Sort function
+  const sortData = (data: PendingReview[]) => {
+    if (!sortKey) return data
+
+    return [...data].sort((a, b) => {
+      let aValue: any
+      let bValue: any
+
+      switch (sortKey) {
+        case 'siteDetails':
+          aValue = (a.fullAddress || '').toLowerCase()
+          bValue = (b.fullAddress || '').toLowerCase()
+          break
+        case 'reviewType':
+          aValue = (a.reviewType || '').toLowerCase()
+          bValue = (b.reviewType || '').toLowerCase()
+          break
+        case 'priority':
+          const priorityOrder = { URGENT: 4, HIGH: 3, NORMAL: 2, LOW: 1 }
+          aValue = priorityOrder[a.priority as keyof typeof priorityOrder] || 0
+          bValue = priorityOrder[b.priority as keyof typeof priorityOrder] || 0
+          break
+        case 'createdAt':
+          aValue = new Date(a.createdAt).getTime()
+          bValue = new Date(b.createdAt).getTime()
+          break
+        case 'status':
+          aValue = (a.status || '').toLowerCase()
+          bValue = (b.status || '').toLowerCase()
+          break
+        default:
+          return 0
+      }
+
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
+      return 0
+    })
+  }
+
   const columns: TableColumn<PendingReview>[] = [
     {
       key: 'siteDetails',
       header: 'Site Details',
+      sortable: true,
       render: (review) => (
         <div>
           <div className="text-sm font-medium text-gray-900">
@@ -480,6 +545,7 @@ export default function SiteRegistrationsPage() {
     {
       key: 'reviewType',
       header: 'Review Type',
+      sortable: true,
       render: (review) => {
         const reviewType = review.reviewType || 'N/A'
         const displayText = reviewType === 'MANUAL_VERIFICATION'
@@ -498,12 +564,14 @@ export default function SiteRegistrationsPage() {
     {
       key: 'priority',
       header: 'Priority',
+      sortable: true,
       render: (review) => getPriorityBadge(review.priority),
       className: 'whitespace-nowrap',
     },
     {
       key: 'createdAt',
       header: 'Created At',
+      sortable: true,
       render: (review) => {
         return (
           <div className="text-sm text-gray-900">
@@ -516,15 +584,44 @@ export default function SiteRegistrationsPage() {
     {
       key: 'status',
       header: 'Status',
+      sortable: true,
       render: (review) => <StatusBadge status={getStatusForBadge(review.status)} />,
       className: 'whitespace-nowrap',
     },
   ]
 
   // Filter only pending reviews
-  const pendingReviews = reviews.filter(review =>
+  let pendingReviews = reviews.filter(review =>
     review.status === 'PENDING' || review.status === 'PENDING_REVIEW' || review.status === 'UNDER_REVIEW'
   )
+
+  // Apply search filter
+  if (searchQuery.trim()) {
+    const query = searchQuery.toLowerCase().trim()
+    pendingReviews = pendingReviews.filter(review =>
+      (review.fullAddress || '').toLowerCase().includes(query) ||
+      (review.createdByUserName || '').toLowerCase().includes(query) ||
+      (review.reviewType || '').toLowerCase().includes(query)
+    )
+  }
+
+  // Apply status filter
+  if (statusFilter.length > 0) {
+    pendingReviews = pendingReviews.filter(review => statusFilter.includes(review.status))
+  }
+
+  // Apply priority filter
+  if (priorityFilter.length > 0) {
+    pendingReviews = pendingReviews.filter(review => priorityFilter.includes(review.priority))
+  }
+
+  // Apply review type filter
+  if (reviewTypeFilter.length > 0) {
+    pendingReviews = pendingReviews.filter(review => reviewTypeFilter.includes(review.reviewType))
+  }
+
+  // Apply sorting
+  pendingReviews = sortData(pendingReviews)
 
   return (
     <Page>
@@ -543,6 +640,111 @@ export default function SiteRegistrationsPage() {
             </div>
           )}
 
+          {/* Search and Filters */}
+          <div className="bg-white rounded-2xl shadow-soft border border-gray-100 p-6 mb-6 relative z-20">
+            <div className="flex items-center gap-4 mb-4">
+              {/* Search Bar */}
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search by address, name, or review type..."
+                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  />
+                </div>
+              </div>
+
+              {/* Show Filters Button */}
+              <div className="flex items-end mt-7">
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium text-gray-700"
+                >
+                  <svg 
+                    className={`w-5 h-5 transition-transform ${showFilters ? 'rotate-180' : ''}`} 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                  <span>{showFilters ? 'Hide Filters' : 'Show Filters'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Filters Section - Conditional */}
+            {showFilters && (
+              <div className="border-t border-gray-200 pt-4 relative z-30">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Status Filter */}
+                  <MultiSelectDropdown
+                    label="Status"
+                    options={[
+                      { value: 'PENDING', label: 'Pending' },
+                      { value: 'PENDING_REVIEW', label: 'Pending Review' },
+                      { value: 'UNDER_REVIEW', label: 'Under Review' },
+                    ]}
+                    value={statusFilter}
+                    onChange={setStatusFilter}
+                    placeholder="All Status"
+                  />
+
+                  {/* Priority Filter */}
+                  <MultiSelectDropdown
+                    label="Priority"
+                    options={[
+                      { value: 'LOW', label: 'Low' },
+                      { value: 'NORMAL', label: 'Normal' },
+                      { value: 'HIGH', label: 'High' },
+                      { value: 'URGENT', label: 'Urgent' },
+                    ]}
+                    value={priorityFilter}
+                    onChange={setPriorityFilter}
+                    placeholder="All Priority"
+                  />
+
+                  {/* Review Type Filter */}
+                  <MultiSelectDropdown
+                    label="Review Type"
+                    options={[
+                      { value: 'MANUAL_VERIFICATION', label: 'Manual Verification' },
+                      { value: 'NEW_SITE_VERIFICATION', label: 'New Site Verification' },
+                      { value: 'SITE_JOIN_REQUEST', label: 'Site Joining Request' },
+                    ]}
+                    value={reviewTypeFilter}
+                    onChange={setReviewTypeFilter}
+                    placeholder="All Types"
+                  />
+                </div>
+
+                {/* Clear Filters Button */}
+                {(statusFilter.length > 0 || priorityFilter.length > 0 || reviewTypeFilter.length > 0) && (
+                  <div className="mt-4">
+                    <button
+                      onClick={() => {
+                        setStatusFilter([])
+                        setPriorityFilter([])
+                        setReviewTypeFilter([])
+                      }}
+                      className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                    >
+                      Clear all filters
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           <Table
             columns={columns}
             data={pendingReviews}
@@ -551,6 +753,9 @@ export default function SiteRegistrationsPage() {
             onRowClick={handleRowClick}
             isLoading={isLoading}
             skeletonRows={10}
+            sortKey={sortKey}
+            sortDirection={sortDirection}
+            onSort={handleSort}
           />
 
           {!isLoading && (
