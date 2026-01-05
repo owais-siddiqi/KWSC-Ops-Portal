@@ -8,19 +8,20 @@ interface RejectModalProps {
   itemName?: string
 }
 
-export default function RejectModal({ 
-  isOpen, 
-  onClose, 
-  onConfirm, 
+export default function RejectModal({
+  isOpen,
+  onClose,
+  onConfirm,
   title = 'Reject Request',
-  itemName 
+  itemName
 }: RejectModalProps) {
   const [reason, setReason] = useState('')
   const [error, setError] = useState('')
+  const [isCustom, setIsCustom] = useState(false)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!reason.trim()) {
       setError('Please provide a reason for rejection')
       return
@@ -34,6 +35,7 @@ export default function RejectModal({
   const handleClose = () => {
     setReason('')
     setError('')
+    setIsCustom(false)
     onClose()
   }
 
@@ -42,15 +44,15 @@ export default function RejectModal({
   return (
     <>
       {/* Backdrop with blur */}
-      <div 
+      <div
         className="fixed inset-0 z-[60] bg-black/30 backdrop-blur-sm animate-fade-in"
         onClick={handleClose}
       />
-      
+
       {/* Modal Container */}
       <div className="fixed inset-0 z-[70] overflow-y-auto pointer-events-none">
         <div className="flex min-h-full items-center justify-center p-4">
-          <div 
+          <div
             className="bg-white rounded-2xl shadow-2xl max-w-lg w-full pointer-events-auto animate-modal-scale"
             onClick={(e) => e.stopPropagation()}
           >
@@ -98,30 +100,61 @@ export default function RejectModal({
               )}
 
               <div>
-                <label htmlFor="rejection-reason" className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Rejection Reason <span className="text-red-500">*</span>
                 </label>
-                <textarea
-                  id="rejection-reason"
-                  value={reason}
-                  onChange={(e) => {
-                    setReason(e.target.value)
-                    setError('')
-                  }}
-                  rows={5}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all resize-none bg-white text-gray-900 placeholder-gray-400"
-                  placeholder="Please provide a detailed reason for rejection..."
-                  required
-                  autoFocus
-                />
-                {error && (
-                  <div className="mt-2 flex items-center text-sm text-red-600 animate-shake">
-                    <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                    {error}
-                  </div>
-                )}
+
+                <div className="space-y-4">
+                  <select
+                    value={isCustom ? 'Custom' : (reason || '')}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      if (value === 'Custom') {
+                        setIsCustom(true)
+                        setReason('')
+                      } else {
+                        setIsCustom(false)
+                        setReason(value)
+                      }
+                      setError('')
+                    }}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all bg-white text-gray-900"
+                  >
+                    <option value="" disabled>Select a reason</option>
+                    <option value="Incomplete Documentation">Incomplete Documentation</option>
+                    <option value="Incorrect Information">Incorrect Information</option>
+                    <option value="Quality Standards Not Met">Quality Standards Not Met</option>
+                    <option value="Policy Violation">Policy Violation</option>
+                    <option value="Duplicate Request">Duplicate Request</option>
+                    <option value="Custom">Custom</option>
+                  </select>
+
+                  {isCustom && (
+                    <div className="animate-fade-in">
+                      <textarea
+                        value={reason}
+                        onChange={(e) => {
+                          setReason(e.target.value)
+                          setError('')
+                        }}
+                        rows={4}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all resize-none bg-white text-gray-900 placeholder-gray-400"
+                        placeholder="Please provide a detailed reason for rejection..."
+                        required={isCustom}
+                        autoFocus
+                      />
+                    </div>
+                  )}
+
+                  {error && (
+                    <div className="mt-2 flex items-center text-sm text-red-600 animate-shake">
+                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {error}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Actions */}

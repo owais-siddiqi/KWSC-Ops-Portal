@@ -11,7 +11,7 @@ interface WeeklyPerformanceChartProps {
   title?: string
 }
 
-export default function WeeklyPerformanceChart({ data, title = 'Weekly Performance' }: WeeklyPerformanceChartProps) {
+export default function WeeklyPerformanceChart({ data, title = 'Performance Analytics' }: WeeklyPerformanceChartProps) {
   return (
     <>
       <style>{`

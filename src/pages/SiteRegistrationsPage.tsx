@@ -7,6 +7,7 @@ import Modal from '../components/Modal'
 import RejectModal from '../components/RejectModal'
 import SearchableSelect from '../components/SearchableSelect'
 import MultiSelectDropdown from '../components/MultiSelectDropdown'
+import TimeRangeSelector, { type TimeRange } from '../components/TimeRangeSelector'
 import { apiClient } from '../services/api'
 import { authUtils } from '../utils/auth'
 
@@ -82,7 +83,12 @@ export default function SiteRegistrationsPage() {
   const [priorityFilter, setPriorityFilter] = useState<string[]>([])
   const [reviewTypeFilter, setReviewTypeFilter] = useState<string[]>([])
   const [showFilters, setShowFilters] = useState(false)
-  
+
+  // Time Range state
+  const [timeRange, setTimeRange] = useState<TimeRange>('monthly')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
+
   // Sorting state
   const [sortKey, setSortKey] = useState<string | null>(null)
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
@@ -111,7 +117,45 @@ export default function SiteRegistrationsPage() {
     }
 
     try {
-      const response = await apiClient.getPendingReviews()
+      const params: any = {
+        page: 1, // Default to page 1 for now, can add pagination state later if needed
+        limit: 100
+      }
+
+      // Calculate date range based on timeRange
+      if (timeRange !== 'custom') {
+        const now = new Date()
+        const start = new Date()
+        start.setHours(0, 0, 0, 0) // Start of today
+
+        if (timeRange === 'daily') {
+          // start is already today 00:00
+          params.startDate = start.toISOString()
+        } else if (timeRange === 'yesterday') {
+          // Yesterday: start and end both yesterday
+          start.setDate(now.getDate() - 1)
+          const end = new Date(start)
+          end.setHours(23, 59, 59, 999)
+          params.startDate = start.toISOString()
+          params.endDate = end.toISOString()
+        } else if (timeRange === 'weekly') {
+          start.setDate(now.getDate() - 7)
+          params.startDate = start.toISOString()
+        } else if (timeRange === 'monthly') {
+          start.setMonth(now.getMonth() - 1)
+          params.startDate = start.toISOString()
+        }
+      } else if (startDate && endDate) {
+        const start = new Date(startDate)
+        start.setHours(0, 0, 0, 0)
+        const end = new Date(endDate)
+        end.setHours(23, 59, 59, 999)
+
+        params.startDate = start.toISOString()
+        params.endDate = end.toISOString()
+      }
+
+      const response = await apiClient.getPendingReviews(params)
 
       if (response.success && response.data) {
         setReviews(response.data)
@@ -136,7 +180,7 @@ export default function SiteRegistrationsPage() {
         setIsLoading(false)
       }
     }
-  }, [])
+  }, [timeRange, startDate, endDate])
 
   // Initial fetch on component mount
   useEffect(() => {
@@ -156,7 +200,32 @@ export default function SiteRegistrationsPage() {
       isCancelled = true
       fetchingRef.current = false
     }
-  }, [fetchPendingReviews])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Only run on mount, NOT on fetchPendingReviews change
+
+  // Refetch when timeRange changes (only for non-custom ranges)
+  useEffect(() => {
+    if (!fetchingRef.current) return // Skip if not mounted yet
+
+    // For custom range, only fetch via Apply button (handled in TimeRangeSelector)
+    if (timeRange === 'custom') {
+      return
+    }
+
+    fetchPendingReviews(true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeRange]) // Only trigger on timeRange change, not on fetchPendingReviews change
+
+  // Refetch when both custom dates are selected
+  useEffect(() => {
+    if (!fetchingRef.current) return // Skip if not mounted yet
+
+    // Only for custom range, when both dates are provided
+    if (timeRange === 'custom' && startDate && endDate) {
+      fetchPendingReviews(true)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startDate, endDate]) // Only trigger on date changes
 
   // Auto-refresh every 1 minute (silently)
   useEffect(() => {
@@ -557,7 +626,9 @@ export default function SiteRegistrationsPage() {
             ? 'New Site Verification'
             : reviewType === 'SITE_JOIN_REQUEST'
               ? 'Site Joining Request'
-              : reviewType
+              : reviewType === 'CONSUMER_NUMBER_LINKING'
+                ? 'Consumer Number Linking'
+                : reviewType
         return (
           <div className="text-sm text-gray-900">{displayText}</div>
         )
@@ -597,6 +668,40 @@ export default function SiteRegistrationsPage() {
   let pendingReviews = reviews.filter(review =>
     review.status === 'PENDING' || review.status === 'PENDING_REVIEW' || review.status === 'UNDER_REVIEW'
   )
+
+  // Apply Time Range Filter
+  // if (timeRange !== 'custom') {
+  //   const now = new Date()
+  //   const start = new Date()
+  //   // Reset to start of day for accurate comparison
+  //   start.setHours(0, 0, 0, 0)
+
+  //   if (timeRange === 'daily') {
+  //     // For daily, we want today's records
+  //     // start is already today 00:00
+  //   } else if (timeRange === 'weekly') {
+  //     start.setDate(now.getDate() - 7)
+  //   } else if (timeRange === 'monthly') {
+  //     start.setMonth(now.getMonth() - 1)
+  //   }
+
+  //   pendingReviews = pendingReviews.filter(review => {
+  //     if (!review.createdAt) return false
+  //     const reviewDate = new Date(review.createdAt)
+  //     return reviewDate >= start
+  //   })
+  // } else if (startDate && endDate) {
+  //   const start = new Date(startDate)
+  //   start.setHours(0, 0, 0, 0)
+  //   const end = new Date(endDate)
+  //   end.setHours(23, 59, 59, 999)
+
+  //   pendingReviews = pendingReviews.filter(review => {
+  //     if (!review.createdAt) return false
+  //     const reviewDate = new Date(review.createdAt)
+  //     return reviewDate >= start && reviewDate <= end
+  //   })
+  // }
 
   // Apply search filter
   if (searchQuery.trim()) {
@@ -665,16 +770,31 @@ export default function SiteRegistrationsPage() {
                 </div>
               </div>
 
+              {/* Time Range Selector */}
+              <div className="flex items-end mt-7">
+                <TimeRangeSelector
+                  timeRange={timeRange}
+                  onTimeRangeChange={(range) => {
+                    setTimeRange(range)
+                    // Trigger fetch when range changes (handled by useEffect dependency)
+                  }}
+                  startDate={startDate}
+                  onStartDateChange={setStartDate}
+                  endDate={endDate}
+                  onEndDateChange={setEndDate}
+                />
+              </div>
+
               {/* Show Filters Button */}
               <div className="flex items-end mt-7">
                 <button
                   onClick={() => setShowFilters(!showFilters)}
                   className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium text-gray-700"
                 >
-                  <svg 
-                    className={`w-5 h-5 transition-transform ${showFilters ? 'rotate-180' : ''}`} 
-                    fill="none" 
-                    stroke="currentColor" 
+                  <svg
+                    className={`w-5 h-5 transition-transform ${showFilters ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
                     viewBox="0 0 24 24"
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -687,6 +807,8 @@ export default function SiteRegistrationsPage() {
             {/* Filters Section - Conditional */}
             {showFilters && (
               <div className="border-t border-gray-200 pt-4 relative z-30">
+
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Status Filter */}
                   <MultiSelectDropdown

@@ -158,7 +158,7 @@ class ApiClient {
     requireAuth: boolean = false
   ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`
-    
+
     // Build headers as a plain object
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -189,7 +189,7 @@ class ApiClient {
         headers['Authorization'] = `Bearer ${token}`
       }
     }
-    
+
     const config: RequestInit = {
       ...options,
       headers,
@@ -197,19 +197,19 @@ class ApiClient {
 
     try {
       console.log('API Request:', { url, method: config.method, body: config.body })
-      
+
       const response = await fetch(url, config)
-      
-      console.log('API Response:', { 
-        status: response.status, 
+
+      console.log('API Response:', {
+        status: response.status,
         statusText: response.statusText,
         headers: Object.fromEntries(response.headers.entries())
       })
-      
+
       // Try to parse JSON response
       let data: any
       const contentType = response.headers.get('content-type')
-      
+
       if (contentType && contentType.includes('application/json')) {
         data = await response.json()
         console.log('API Response Data:', data)
@@ -222,12 +222,12 @@ class ApiClient {
       if (!response.ok) {
         // Handle error response
         const errorMessage = data.message || data.error || `HTTP ${response.status}: ${response.statusText}`
-        
+
         // Don't log 404 errors to console - they're expected in some cases
         if (response.status !== 404) {
           console.error('API Error:', errorMessage)
         }
-        
+
         throw new Error(errorMessage)
       }
 
@@ -243,11 +243,11 @@ class ApiClient {
 
   // Login API
   async login(credentials: LoginRequest): Promise<LoginResponse> {
-    console.log('Login request:', { 
+    console.log('Login request:', {
       url: `${this.baseURL}${API_ENDPOINTS.LOGIN}`,
-      credentials: { ...credentials, password: '***' } 
+      credentials: { ...credentials, password: '***' }
     })
-    
+
     return this.request<LoginResponse>(API_ENDPOINTS.LOGIN, {
       method: 'POST',
       body: JSON.stringify(credentials),
@@ -278,9 +278,34 @@ class ApiClient {
   }
 
   // Get Reviewer Overview API
-  async getReviewerOverview(): Promise<any> {
+  async getReviewerOverview(params?: {
+    timeRange?: 'daily' | 'weekly' | 'monthly' | 'custom'
+    startDate?: string
+    endDate?: string
+  }): Promise<any> {
+    let endpoint: string = API_ENDPOINTS.REVIEWER_OVERVIEW
+
+    // Build query string if params provided
+    if (params) {
+      const queryParams = new URLSearchParams()
+      if (params.timeRange) {
+        queryParams.append('timeRange', params.timeRange)
+      }
+      if (params.startDate) {
+        queryParams.append('startDate', params.startDate)
+      }
+      if (params.endDate) {
+        queryParams.append('endDate', params.endDate)
+      }
+
+      const queryString = queryParams.toString()
+      if (queryString) {
+        endpoint = `${endpoint}?${queryString}`
+      }
+    }
+
     return this.request<any>(
-      API_ENDPOINTS.REVIEWER_OVERVIEW,
+      endpoint,
       {
         method: 'GET',
       },
@@ -289,9 +314,38 @@ class ApiClient {
   }
 
   // Get Pending Reviews API (Reviewer Module)
-  async getPendingReviews(): Promise<PendingReviews> {
+  async getPendingReviews(params?: {
+    page?: number
+    limit?: number
+    startDate?: string
+    endDate?: string
+  }): Promise<PendingReviews> {
+    let endpoint: string = API_ENDPOINTS.PENDING_REVIEWS
+
+    // Build query string if params provided
+    if (params) {
+      const queryParams = new URLSearchParams()
+      if (params.page) {
+        queryParams.append('page', params.page.toString())
+      }
+      if (params.limit) {
+        queryParams.append('limit', params.limit.toString())
+      }
+      if (params.startDate) {
+        queryParams.append('startDate', params.startDate)
+      }
+      if (params.endDate) {
+        queryParams.append('endDate', params.endDate)
+      }
+
+      const queryString = queryParams.toString()
+      if (queryString) {
+        endpoint = `${endpoint}?${queryString}`
+      }
+    }
+
     return this.request<PendingReviews>(
-      API_ENDPOINTS.PENDING_REVIEWS,
+      endpoint,
       {
         method: 'GET',
       },
@@ -378,21 +432,21 @@ class ApiClient {
   async logout(): Promise<{ success: boolean }> {
     const url = `${this.baseURL}${API_ENDPOINTS.LOGOUT}`
     const token = authUtils.getToken()
-    
+
     try {
       const headers: HeadersInit = {
         'Content-Type': 'application/json',
       }
-      
+
       if (token) {
         headers['Authorization'] = `Bearer ${token}`
       }
-      
+
       const response = await fetch(url, {
         method: 'POST',
         headers,
       })
-      
+
       // Try to parse response, but don't throw errors
       if (response.ok) {
         try {

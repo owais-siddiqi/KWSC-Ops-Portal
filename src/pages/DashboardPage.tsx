@@ -6,6 +6,7 @@ import ReviewsByStatusChart from '../components/ReviewsByStatusChart'
 import WeeklyPerformanceChart from '../components/WeeklyPerformanceChart'
 import { apiClient } from '../services/api'
 import { authUtils } from '../utils/auth'
+import TimeRangeSelector, { type TimeRange } from '../components/TimeRangeSelector'
 
 interface ReviewerOverview {
   summary: {
@@ -19,6 +20,15 @@ interface ReviewerOverview {
     pendingThisWeek: number
     approvedThisWeek: number
     rejectedThisWeek: number
+  }
+  selectedRange?: {
+    timeRange: string
+    startDate: string
+    endDate: string
+    pending: number
+    approved: number
+    rejected: number
+    total: number
   }
   kpis: {
     reviewerId: string
@@ -104,54 +114,69 @@ export default function DashboardPage() {
   const [overview, setOverview] = useState<ReviewerOverview | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [timeRange, setTimeRange] = useState<TimeRange>('daily')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
   const fetchingRef = useRef(false)
 
+  const fetchDashboardData = async () => {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const params: any = { timeRange }
+
+      // Add custom date range if selected
+      if (timeRange === 'custom' && startDate && endDate) {
+        params.startDate = startDate
+        params.endDate = endDate
+      }
+
+      const response = await apiClient.getReviewerOverview(params)
+
+      if (response.success && response.data) {
+        setOverview(response.data)
+      }
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message)
+        if (err.message.includes('Unauthorized') || err.message.includes('401')) {
+          authUtils.clearAuth()
+          window.location.href = '/login'
+        }
+      } else {
+        setError('Failed to load dashboard data')
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Initial fetch on component mount
   useEffect(() => {
     if (fetchingRef.current) {
       return
     }
     fetchingRef.current = true
 
-    let isCancelled = false
-
-    const fetchDashboardData = async () => {
-      setIsLoading(true)
-      setError(null)
-      
-      try {
-        const response = await apiClient.getReviewerOverview()
-
-        if (isCancelled) return
-
-        if (response.success && response.data) {
-          setOverview(response.data)
-        }
-      } catch (err) {
-        if (isCancelled) return
-
-        if (err instanceof Error) {
-          setError(err.message)
-          if (err.message.includes('Unauthorized') || err.message.includes('401')) {
-            authUtils.clearAuth()
-            window.location.href = '/login'
-          }
-        } else {
-          setError('Failed to load dashboard data')
-        }
-      } finally {
-        if (!isCancelled) {
-          setIsLoading(false)
-        }
-      }
-    }
-
     fetchDashboardData()
 
     return () => {
-      isCancelled = true
       fetchingRef.current = false
     }
   }, [])
+
+  // Refetch when time range changes
+  useEffect(() => {
+    if (!fetchingRef.current) return
+
+    // For custom range, only fetch if both dates are provided
+    if (timeRange === 'custom' && (!startDate || !endDate)) {
+      return
+    }
+
+    fetchDashboardData()
+  }, [timeRange, startDate, endDate])
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString('en-PK', {
@@ -188,7 +213,7 @@ export default function DashboardPage() {
 
   const weeklyPerformanceData = overview ? [
     {
-      name: 'This Week',
+      name: '',
       Approved: overview.kpis.thisWeek.approved,
       Rejected: overview.kpis.thisWeek.rejected,
     },
@@ -200,12 +225,49 @@ export default function DashboardPage() {
     <Page>
       <DashboardLayout>
         <div>
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
-            <p className="text-gray-600">
-              Welcome back, {user?.fullName || 'User'}!
-            </p>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
+              <p className="text-gray-600">
+                Welcome back, {user?.fullName || 'User'}!
+              </p>
+            </div>
+            <div className="flex-shrink-0">
+              <TimeRangeSelector
+                timeRange={timeRange}
+                onTimeRangeChange={setTimeRange}
+                startDate={startDate}
+                onStartDateChange={setStartDate}
+                endDate={endDate}
+                onEndDateChange={setEndDate}
+              />
+            </div>
           </div>
+
+          {/* Display Selected Range Info */}
+          {overview?.selectedRange && (
+            <div className="bg-white rounded-2xl shadow-soft border border-gray-100 p-4 mb-6">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600">
+                  Showing data for: <span className="font-medium text-gray-900">
+                    {new Date(overview.selectedRange.startDate).toLocaleDateString('en-PK', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric'
+                    })} - {new Date(overview.selectedRange.endDate).toLocaleDateString('en-PK', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric'
+                    })}
+                  </span>
+                </span>
+                <span className="text-gray-600">
+                  Total: <span className="font-bold text-[#4388BC]">{overview.selectedRange.total}</span>
+                  {' '}({overview.selectedRange.approved} approved, {overview.selectedRange.rejected} rejected)
+                </span>
+              </div>
+            </div>
+          )}
 
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-6">
@@ -427,9 +489,9 @@ export default function DashboardPage() {
                       </div>
                     </div>
                     <div className="pt-2">
-                      <div className="flex justify-between items-center">
+                      <div className="flex justify-between items-center mt-4">
                         <span className="text-sm font-medium text-gray-600">Avg Review Time</span>
-                        <span className="text-lg font-bold text-gray-900">
+                        <span className="text-sm font-bold text-gray-900">
                           {overview.kpis.reviewStats.averageReviewTimeFormatted}
                         </span>
                       </div>
@@ -465,9 +527,8 @@ export default function DashboardPage() {
                     <div className="pt-2 border-t border-gray-200">
                       <div className="flex justify-between items-center mb-2">
                         <span className="text-sm font-medium text-gray-600">Today's Achievement</span>
-                        <span className={`text-lg font-bold ${
-                          overview.kpis.today.status === 'BELOW_TARGET' ? 'text-red-600' : 'text-green-600'
-                        }`}>
+                        <span className={`text-lg font-bold ${overview.kpis.today.status === 'BELOW_TARGET' ? 'text-red-600' : 'text-green-600'
+                          }`}>
                           {overview.kpis.today.achievement}%
                         </span>
                       </div>
