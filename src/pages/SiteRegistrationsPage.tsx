@@ -769,7 +769,7 @@ export default function SiteRegistrationsPage() {
                 isOpen={isModalOpen}
                 onClose={closeModal}
                 title="Site Registration Details"
-                size="5xl"
+                size="2xl"
                 headerActions={
                   !isEditMode ? (
                     selectedReviewType !== 'CONSUMER_NUMBER_LINKING' && (
@@ -829,20 +829,20 @@ export default function SiteRegistrationsPage() {
                     </div>
 
                     {/* Location Map & Documents Skeleton */}
-                    <div className="border-t border-gray-200 pt-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="border-t border-gray-200 pt-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Map Skeleton */}
                         <div>
-                          <h3 className="text-lg font-semibold text-gray-900 mb-4">Location Map</h3>
-                          <div className="h-[365px] bg-gray-200 rounded-lg animate-pulse"></div>
+                          <h3 className="text-base font-semibold text-gray-900 mb-3">Location Map</h3>
+                          <div className="h-[280px] bg-gray-200 rounded-lg animate-pulse"></div>
                         </div>
                         {/* Documents Skeleton */}
                         <div>
-                          <h3 className="text-lg font-semibold text-gray-900 mb-4">Site Documents & Pictures</h3>
-                          <div className="space-y-4 h-[365px] overflow-y-auto">
+                          <h3 className="text-base font-semibold text-gray-900 mb-3">Site Documents & Pictures</h3>
+                          <div className="space-y-3 h-[280px] overflow-y-auto">
                             {[1, 2].map((i) => (
-                              <div key={i} className="bg-gray-50 p-4 rounded-lg">
-                                <div className="h-[300px] bg-gray-200 rounded-lg animate-pulse"></div>
+                              <div key={i} className="bg-gray-50 p-3 rounded-lg">
+                                <div className="h-[220px] bg-gray-200 rounded-lg animate-pulse"></div>
                               </div>
                             ))}
                           </div>
@@ -851,9 +851,9 @@ export default function SiteRegistrationsPage() {
                     </div>
 
                     {/* Created By Skeleton */}
-                    <div className="border-t border-gray-200 pt-6">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Created By</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="border-t border-gray-200 pt-4">
+                      <h3 className="text-base font-semibold text-gray-900 mb-3">Created By</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
                           <div className="h-10 bg-gray-200 rounded-lg animate-pulse"></div>
@@ -870,9 +870,9 @@ export default function SiteRegistrationsPage() {
                     </div>
 
                     {/* Review Information Skeleton */}
-                    <div className="border-t border-gray-200 pt-6">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Review Information</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="border-t border-gray-200 pt-4">
+                      <h3 className="text-base font-semibold text-gray-900 mb-3">Review Information</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
                           <div className="h-10 bg-gray-200 rounded-lg animate-pulse"></div>
@@ -889,18 +889,18 @@ export default function SiteRegistrationsPage() {
                     </div>
                   </div>
                 ) : selectedReview ? (
-                  <div className="space-y-6">
+                  <div className="space-y-4">
                     {/* Site Information */}
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Site Information</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <h3 className="text-base font-semibold text-gray-900 mb-3">Site Information</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">House Number</label>
-                          <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-lg">{selectedReview.site?.houseNo || 'N/A'}</p>
+                          <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded-lg">{selectedReview.site?.houseNo || 'N/A'}</p>
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Street</label>
-                          <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-lg">{selectedReview.site?.street || 'N/A'}</p>
+                          <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded-lg">{selectedReview.site?.street || 'N/A'}</p>
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Area</label>
@@ -928,7 +928,7 @@ export default function SiteRegistrationsPage() {
                               isLoading={isLoadingAreas}
                             />
                           ) : (
-                            <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-lg">{selectedReview.site?.areaName || 'N/A'}</p>
+                            <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded-lg">{selectedReview.site?.areaName || 'N/A'}</p>
                           )}
                         </div>
                         <div>
@@ -949,7 +949,7 @@ export default function SiteRegistrationsPage() {
                               isLoading={isLoadingBlocks}
                             />
                           ) : (
-                            <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-lg">{selectedReview.site?.blockName || 'N/A'}</p>
+                            <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded-lg">{selectedReview.site?.blockName || 'N/A'}</p>
                           )}
                         </div>
                       </div>
@@ -957,12 +957,12 @@ export default function SiteRegistrationsPage() {
 
                     {/* Location Map & Site Documents Side by Side */}
                     {((isEditMode ? editedData?.site?.pinLat && editedData?.site?.pinLng : selectedReview.site?.pinLat && selectedReview.site?.pinLng) || (selectedReview.documents && Array.isArray(selectedReview.documents) && selectedReview.documents.length > 0)) && (
-                      <div className="border-t border-gray-200 pt-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="border-t border-gray-200 pt-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {/* Location Map - Left Side */}
                           {(isEditMode ? editedData?.site?.pinLat && editedData?.site?.pinLng : selectedReview.site?.pinLat && selectedReview.site?.pinLng) && (
                             <div>
-                              <h3 className="text-lg font-semibold text-gray-900 mb-4">Location Map</h3>
+                              <h3 className="text-base font-semibold text-gray-900 mb-3">Location Map</h3>
                               <div className="rounded-lg overflow-hidden border border-gray-200">
                                 {(() => {
                                   const pinLat = isEditMode ? editedData?.site?.pinLat : selectedReview.site?.pinLat
@@ -973,7 +973,7 @@ export default function SiteRegistrationsPage() {
                                     return (
                                       <iframe
                                         width="100%"
-                                        height="365"
+                                        height="280"
                                         style={{ border: 0 }}
                                         loading="lazy"
                                         allowFullScreen
@@ -1006,8 +1006,8 @@ export default function SiteRegistrationsPage() {
                           {/* Site Documents & Pictures - Right Side */}
                           {selectedReview.documents && Array.isArray(selectedReview.documents) && selectedReview.documents.length > 0 && (
                             <div>
-                              <h3 className="text-lg font-semibold text-gray-900 mb-4">Site Documents & Pictures</h3>
-                              <div className="space-y-4 h-[365px] overflow-y-auto">
+                              <h3 className="text-base font-semibold text-gray-900 mb-3">Site Documents & Pictures</h3>
+                              <div className="space-y-3 h-[280px] overflow-y-auto">
                                 {selectedReview.documents.map((doc, docIndex) => {
                                   // Use imageData from API response (base64 format)
                                   let imageData = doc?.imageData
@@ -1027,11 +1027,11 @@ export default function SiteRegistrationsPage() {
                                   const isImage = imageData && imageData.startsWith('data:image/')
 
                                   return (
-                                    <div key={doc?.id || `site-doc-${docIndex}`} className="bg-gray-50 p-4 rounded-lg">
+                                    <div key={doc?.id || `site-doc-${docIndex}`} className="bg-gray-50 p-2 rounded-lg">
                                       {imageData && (
-                                        <div className="mt-3">
+                                        <div>
                                           {isImage ? (
-                                            <div className="relative bg-white rounded-lg border-2 border-gray-200 p-3 flex items-center justify-center h-[365px] overflow-hidden cursor-pointer hover:border-blue-400 transition-colors"
+                                            <div className="relative bg-white rounded-lg border border-gray-200 p-2 flex items-center justify-center h-[268px] overflow-hidden cursor-pointer hover:border-blue-400 transition-colors"
                                               onClick={() => {
                                                 // Open base64 image in new tab
                                                 const newWindow = window.open()
@@ -1089,40 +1089,40 @@ export default function SiteRegistrationsPage() {
                     )}
 
                     {/* Created By Information */}
-                    <div className="border-t border-gray-200 pt-6">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Created By</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="border-t border-gray-200 pt-4">
+                      <h3 className="text-base font-semibold text-gray-900 mb-3">Created By</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                          <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-lg">
+                          <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded-lg">
                             {selectedReview.createdByUserName || 'N/A'}
+                          </p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">User Type</label>
+                          <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded-lg">
+                            {selectedReview.createdByUserType || 'N/A'}
                           </p>
                         </div>
                         {selectedReview.createdByConsumerNo && (
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Consumer Number</label>
-                            <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-lg">
+                            <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded-lg">
                               {selectedReview.createdByConsumerNo}
                             </p>
                           </div>
                         )}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">User Type</label>
-                          <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-lg">
-                            {selectedReview.createdByUserType || 'N/A'}
-                          </p>
-                        </div>
                       </div>
                     </div>
 
                     {/* Review Information */}
-                    <div className="border-t border-gray-200 pt-6">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Review Information</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="border-t border-gray-200 pt-4">
+                      <h3 className="text-base font-semibold text-gray-900 mb-3">Review Information</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {selectedReview.priority && (
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-                            <div className="bg-gray-50 p-3 rounded-lg">
+                            <div className="bg-gray-50 p-2 rounded-lg">
                               {getPriorityBadge(selectedReview.priority)}
                             </div>
                           </div>
@@ -1130,7 +1130,7 @@ export default function SiteRegistrationsPage() {
                         {selectedReview.status && (
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                            <div className="bg-gray-50 p-3 rounded-lg">
+                            <div className="bg-gray-50 p-2 rounded-lg">
                               <StatusBadge status={getStatusForBadge(selectedReview.status)} />
                             </div>
                           </div>
@@ -1138,7 +1138,7 @@ export default function SiteRegistrationsPage() {
                         {selectedReview.createdAt && (
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Created At</label>
-                            <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-lg">{formatDate(selectedReview.createdAt)}</p>
+                            <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded-lg">{formatDate(selectedReview.createdAt)}</p>
                           </div>
                         )}
                       </div>

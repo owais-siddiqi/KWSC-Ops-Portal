@@ -9,8 +9,18 @@ interface ModalProps {
   headerActions?: ReactNode
 }
 
-export default function Modal({ isOpen, onClose, title, children, headerActions }: ModalProps) {
+export default function Modal({ isOpen, onClose, title, children, size = '4xl', headerActions }: ModalProps) {
   if (!isOpen) return null
+
+  const sizeClasses = {
+    sm: 'max-w-sm',
+    md: 'max-w-md',
+    lg: 'max-w-lg',
+    xl: 'max-w-xl',
+    '2xl': 'max-w-2xl',
+    '4xl': 'max-w-4xl',
+    '5xl': 'max-w-5xl',
+  }
 
   return (
     <>
@@ -24,7 +34,7 @@ export default function Modal({ isOpen, onClose, title, children, headerActions 
       <div className="fixed inset-0 z-[70] overflow-hidden pointer-events-none">
         <div className="flex min-h-full items-start justify-center p-6 pt-8">
           <div 
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[calc(100vh-4rem)] pointer-events-auto flex flex-col animate-modal-scale"
+            className={`bg-white rounded-2xl shadow-2xl w-full ${sizeClasses[size]} max-h-[calc(100vh-4rem)] pointer-events-auto flex flex-col animate-modal-scale`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -44,12 +54,10 @@ export default function Modal({ isOpen, onClose, title, children, headerActions 
               </div>
             </div>
 
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
-              <div className="max-w-5xl mx-auto">
-                {children}
-              </div>
-            </div>
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
+            {children}
+          </div>
           </div>
         </div>
       </div>
